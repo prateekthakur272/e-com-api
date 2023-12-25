@@ -21,6 +21,8 @@ async def create_buisness(sender :"Type[models.User]", instance: models.User, cr
                 buisness_name = '{instance.username}',
                 owner = instance,
             )
+            await models.BuisnessPydantic.from_tortoise_orm(buisness)
+            #send mail
         except IntegrityError:
             pass
         
