@@ -13,14 +13,14 @@ class User(Model):
     
 
 UserPydantic = creator.pydantic_model_creator(User, name='User', exclude=('is_verified',))
-UserPydanticIn = PydanticIn = creator.pydantic_model_creator(User, name='UserIn', exclude_readonly=True)
+UserPydanticIn = PydanticIn = creator.pydantic_model_creator(User, name='UserIn', exclude_readonly=True, exclude=('is_verified','join_date'))
 UserPydanticOut = PydanticOut = creator.pydantic_model_creator(User, name='UserOut', exclude=('password',))
     
     
     
 class Buisness(Model):
     id = fields.IntField(pk=True, index=True)
-    buisness_name = fields.CharField(max_length=20, null = False, unique = True)
+    buisness_name = fields.CharField(max_length=100, null = False, unique = True)
     city = fields.CharField(max_length=100, null = False, default = 'Unspecified')
     region = fields.CharField(max_length=100, null = False, default = "Unspecified")
     buisness_description = fields.TextField(null = True)
