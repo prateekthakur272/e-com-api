@@ -9,6 +9,7 @@ uvicorn = "*"
 tortoise-orm = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
 fastapi-mail = "*"
+python-dotenv = "*"
 
 [dev-packages]
 
