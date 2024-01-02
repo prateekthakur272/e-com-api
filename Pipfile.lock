@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "738e04ec93149f6048156e4e9170a1a097d71623a994133b9517804e622d82d5"
+            "sha256": "852885e334f7952bbf1f7a6a7b69f2b58691fa407119bb5ad073f7e60d800f19"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -364,6 +364,15 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==2.1.0"
+        },
+        "pyjwt": {
+            "hashes": [
+                "sha256:57e28d156e3d5c10088e0c68abb90bfac3df82b40a71bd0daa20c65ccd5c23de",
+                "sha256:59127c392cc44c2da5bb3192169a91f429924e17aff6534d70fdc02ab3e04320"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.7'",
+            "version": "==2.8.0"
         },
         "pypika-tortoise": {
             "hashes": [

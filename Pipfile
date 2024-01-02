@@ -10,6 +10,7 @@ tortoise-orm = "*"
 passlib = {extras = ["bcrypt"], version = "*"}
 fastapi-mail = "*"
 python-dotenv = "*"
+pyjwt = "*"
 
 [dev-packages]
 
