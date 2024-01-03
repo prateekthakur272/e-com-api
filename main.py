@@ -58,9 +58,7 @@ async def verification(request:Request, token:str):
         user.is_verified = True
         await user.save()
         return templates.TemplateResponse('verified.html', {'request':request, 'username':user.username})
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid or expired token', headers={
-            'WWW-Authenticate':'Bearer'
-        })
+    return templates.TemplateResponse('invalid_token.html', {'request': request}, status_code=status.HTTP_401_UNAUTHORIZED)
 
 
 register_tortoise(
