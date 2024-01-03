@@ -27,7 +27,7 @@ async def create_buisness(sender :"Type[models.User]", instance: models.User, cr
     if created:
         try:
             buisness = await models.Buisness.create(
-                buisness_name = '{instance.username}',
+                buisness_name = instance.username,
                 owner = instance,
             )
             await models.BuisnessPydantic.from_tortoise_orm(buisness)
