@@ -1,10 +1,11 @@
 # from fastapi import (BackgroundTasks, UploadFile, File, Form, Depends, HTTPException, status)
 from dotenv import dotenv_values
-
 from models import User
 import jwt
 from email.mime.text import MIMEText
 from smtplib import SMTP_SSL
+
+from jinja2 import Environment, FileSystemLoader
 
 
 config_creds = dotenv_values('.env')
@@ -12,6 +13,13 @@ config_creds = dotenv_values('.env')
 EMAIL = config_creds['EMAIL']
 PASSWORD = config_creds['PASSWORD']
 SECRET = config_creds['SECRET']
+    
+
+def render_template(path:str, data:dict):
+    env = Environment(loader= FileSystemLoader('templates/'))
+    template = env.get_template(path)
+    return template.render(data)
+    
     
     
 async def send_email(instance: User):
@@ -22,23 +30,7 @@ async def send_email(instance: User):
     }
     token = jwt.encode(payload=token_data, key=SECRET, algorithm='HS256')
     
-    template = f"""
-    <!DOCTYPE html>
-    <html>
-        <head></head>
-        <body>
-            <div style = "display: flex; align-items: center; justify-content: center; flex-direction: column">
-                <h3>Account Verification</h3>
-                <br>
-                <p>Thanks for choosing E-com API, please click on the button to verify your account</p>
-                <br>
-                <a style = "margin-top: 1rem; padding: 1rem; border-radius: 0.5rem; font-size: 1rem; text-decoraton: none; background: #0275d8; color: white;" href="http://localhost:8000/verification?token={token}">Verify Account</a>
-                <br>
-                <p>Please ignore if already verified, or you did not registered</p>
-            </div>
-        </body>
-    </html>
-    """
+    template = render_template('verification.html', {'token':token})
     
     message = MIMEText(template, 'html')
     message['Subject'] = 'Ecom API Account Verification'

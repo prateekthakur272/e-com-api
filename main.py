@@ -57,7 +57,7 @@ async def verification(request:Request, token:str):
     if (user and not user.is_verified):
         user.is_verified = True
         await user.save()
-        return templates.TemplateResponse('verification.html', {'request':request, 'username':user.username})
+        return templates.TemplateResponse('verified.html', {'request':request, 'username':user.username})
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid or expired token', headers={
             'WWW-Authenticate':'Bearer'
         })
