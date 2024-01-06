@@ -14,6 +14,9 @@ def get_hashed_password(raw_password:str):
     return password_context.hash(raw_password)
 
 
+def verify_password(plain_password:str, hashed_password:str):
+    return password_context.verify(plain_password, hashed_password)
+
 async def verify_token(token:str):
     try:
         payload = jwt.decode(token, config_creds['SECRET'], algorithms=['HS256'])
@@ -24,3 +27,12 @@ async def verify_token(token:str):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid token', headers={
             'WWW-Authenticate':'Bearer'
         })
+
+async def authenticate_user(username:str, password:str):
+    user = await User.get(username = username)
+    if user and verify_password(password, user.password):
+        pass
+
+async def token_generator(username:str, password:str):
+    user = await authenticate_user(username, password)
+    pass
