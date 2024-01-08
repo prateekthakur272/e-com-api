@@ -22,6 +22,7 @@ from fastapi import File, UploadFile
 import secrets
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
+from uploads import save_image
 
 
 app = FastAPI()
@@ -133,6 +134,26 @@ async def upload_profile(file: UploadFile = File(...), user: models.UserPydantic
     img_url = BASE_URL+file_name
     return {'status':'ok','img_url':img_url}
 
+@app.post('/upload/product/{id}')
+async def upload_product(id: int, file:UploadFile = File(...), user:models.UserPydantic = Depends(get_current_user)):
+    file_path = 'static/images/'
+    
+    product = await models.Product.get(id=id)
+    buisness = await product.buisness
+    owner = await buisness.owner
+    
+    if owner == user:
+        file_name = await save_image(file=file, file_path=file_path, size=(400,400))
+        product.product_image = file_name
+        await product.save()
+        img_url = BASE_URL+file_path+file_name
+        return {'status':'ok','img_url':img_url}
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Not Authorised', headers={
+            'WWW-Authenticate':'Bearer'
+        })
+    
+    
 # tortoise orm
 register_tortoise(
     app=app,
