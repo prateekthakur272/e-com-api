@@ -1,25 +1,38 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Depends
 from tortoise.contrib.fastapi import register_tortoise
 import uvicorn
 import models
-from authentication import get_hashed_password, verify_token
 from fastapi.responses import HTMLResponse
 from fastapi.requests import Request
-
 # imports for signals
 from tortoise.signals import post_save
 from typing import List, Optional, Type
 from tortoise import BaseDBAsyncClient
 from tortoise.exceptions import IntegrityError
-
 # templates
 from fastapi.templating import Jinja2Templates
-
 # email
 from emails import *
+# authentication
+from authentication import * 
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from config import SECRET
 
 
 app = FastAPI()
+templates = Jinja2Templates('templates')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET, algorithms=['HS256'])
+        user = await User.get(id=payload.get('id'))
+    except:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid token', headers={
+            'WWW-Authenticate':'Bearer'
+        })
+    return user
+
 
 # signals
 @post_save(models.User)
@@ -35,10 +48,24 @@ async def create_buisness(sender :"Type[models.User]", instance: models.User, cr
             #send mail
         except IntegrityError:
             pass
-        
+
+# routes    
 @app.get('/')
 def index():
     return {'message': 'Ecom Api'}
+
+@app.post('/user/me')
+async def login(user: models.UserPydanticIn = Depends(get_current_user)):
+    buisness = await models.Buisness.get(owner=user)
+    return {
+        'status': 'ok',
+        'data': {
+            'username':user.username,
+            'email':user.email,
+            'verified':user.is_verified,
+            'join_date': user.join_date.strftime('%b %d %Y')
+        }
+    }
 
 @app.post('/register')
 async def register_user(user: models.UserPydanticIn):
@@ -49,7 +76,6 @@ async def register_user(user: models.UserPydanticIn):
     return {'status':'ok', 'message':f'user created with username: {user_response.username} and email: {user_response.email}, please verify your email by clicking the link in a email sent by us.'}
 
 
-templates = Jinja2Templates('templates')
 
 @app.get('/verification', response_class=HTMLResponse)
 async def verification(request:Request, token:str):
@@ -60,7 +86,12 @@ async def verification(request:Request, token:str):
         return templates.TemplateResponse('verified.html', {'request':request, 'username':user.username})
     return templates.TemplateResponse('invalid_token.html', {'request': request}, status_code=status.HTTP_401_UNAUTHORIZED)
 
+@app.post('/token')
+async def generate_token(request_form: OAuth2PasswordRequestForm = Depends()):
+    token = await token_generator(request_form.username, request_form.password)
+    return {'access_token': token, 'token_type': 'bearer'}
 
+# tortoise orm
 register_tortoise(
     app=app,
     db_url='sqlite://db.sqlite3',

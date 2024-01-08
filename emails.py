@@ -1,5 +1,4 @@
-# from fastapi import (BackgroundTasks, UploadFile, File, Form, Depends, HTTPException, status)
-from dotenv import dotenv_values
+from config import EMAIL, PASSWORD, SECRET
 from models import User
 import jwt
 from email.mime.text import MIMEText
@@ -7,13 +6,6 @@ from smtplib import SMTP_SSL
 
 from jinja2 import Environment, FileSystemLoader
 
-
-config_creds = dotenv_values('.env')
-
-EMAIL = config_creds['EMAIL']
-PASSWORD = config_creds['PASSWORD']
-SECRET = config_creds['SECRET']
-    
 
 def render_template(path:str, data:dict):
     env = Environment(loader= FileSystemLoader('templates/'))

@@ -11,6 +11,7 @@ passlib = {extras = ["bcrypt"], version = "*"}
 fastapi-mail = "*"
 python-dotenv = "*"
 pyjwt = "*"
+python-multipart = "*"
 
 [dev-packages]
 
