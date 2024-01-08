@@ -16,12 +16,18 @@ from emails import *
 # authentication
 from authentication import * 
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from config import SECRET
+from config import SECRET, BASE_URL
+# files upload
+from fastapi import File, UploadFile
+import secrets
+from fastapi.staticfiles import StaticFiles
+from PIL import Image
 
 
 app = FastAPI()
 templates = Jinja2Templates('templates')
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+app.mount('/static', StaticFiles(directory='static'), name='static')
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
@@ -51,7 +57,7 @@ async def create_buisness(sender :"Type[models.User]", instance: models.User, cr
 
 # routes    
 @app.get('/')
-def index():
+def root():
     return {'message': 'Ecom Api'}
 
 @app.post('/user/me')
@@ -90,6 +96,42 @@ async def verification(request:Request, token:str):
 async def generate_token(request_form: OAuth2PasswordRequestForm = Depends()):
     token = await token_generator(request_form.username, request_form.password)
     return {'access_token': token, 'token_type': 'bearer'}
+
+
+@app.post('/upload/profile')
+async def upload_profile(file: UploadFile = File(...), user: models.UserPydantic = Depends(get_current_user)):
+    parts = file.filename.lower().split('.')
+    allowed_extensions = ['jpg','png','jpeg','img']
+    file_path = 'static/images/'
+    extension = parts[1]
+    if extension not in allowed_extensions:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail= f'file type {extension} not allowed')
+    
+    token_name = f'{secrets.token_hex(12)}.{extension}'
+    file_name = file_path+token_name
+    content = await file.read()
+    
+    with open(file_name,'wb') as new_file:
+        new_file.write(content)
+    
+    img = Image.open(file_name)
+    img = img.resize(size=(200, 200))
+    img.save(file_name)
+    img.close()
+    file.close()
+    
+    buisness = await models.Buisness.get(owner = user)
+    owner = await buisness.owner
+    if owner == user:
+        buisness.logo = token_name
+        await buisness.save()
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Not Authorised', headers={
+            'WWW-Authenticate':'Bearer'
+        })
+    
+    img_url = BASE_URL+file_name
+    return {'status':'ok','img_url':img_url}
 
 # tortoise orm
 register_tortoise(
