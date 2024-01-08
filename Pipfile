@@ -12,6 +12,8 @@ fastapi-mail = "*"
 python-dotenv = "*"
 pyjwt = "*"
 python-multipart = "*"
+pillow = "*"
+aiofiles = "*"
 
 [dev-packages]
 
