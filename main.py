@@ -64,13 +64,16 @@ def root():
 @app.post('/user/me')
 async def login(user: models.UserPydanticIn = Depends(get_current_user)):
     buisness = await models.Buisness.get(owner=user)
+    logo = buisness.logo
+    logo_url = f'{BASE_URL}static/images/{logo}'
     return {
         'status': 'ok',
         'data': {
             'username':user.username,
             'email':user.email,
             'verified':user.is_verified,
-            'join_date': user.join_date.strftime('%b %d %Y')
+            'join_date': user.join_date.strftime('%b %d %Y'),
+            'logo_url': logo_url
         }
     }
 
