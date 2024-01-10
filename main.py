@@ -137,8 +137,54 @@ async def upload_profile(file: UploadFile = File(...), user: models.UserPydantic
     img_url = BASE_URL+file_name
     return {'status':'ok','img_url':img_url}
 
+
+@app.get('/products')
+async def get_all_products():
+    query = models.Product.all()
+    print(query)
+    response = await models.ProductPydantic.from_queryset(query)
+    return {'status':'ok', 'data': response}
+
+@app.get('/products/{id}')
+async def get_product_by_id(id:int):
+    product = await models.Product.get(id=id)
+    buisness = await product.buisness
+    owner = await buisness.owner
+    response = await models.ProductPydantic.from_tortoise_orm(product)
+    return {'status':'ok', 'data':
+        {
+            'product': response,
+            'buisness':{
+                'name':buisness.buisness_name,
+                'city':buisness.city,
+                'region':buisness.region,
+                'description':buisness.buisness_description,
+                'logo':buisness.logo,
+            },
+            'owner':{
+                'id':owner.id,
+                'email':owner.email,
+                'join_date':owner.join_date.strftime('%b %d %Y'),
+                
+            }
+        }
+    }
+
+
+@app.post('/products')
+async def add_product(product: models.ProductPydanticIn, user: models.UserPydantic = Depends(get_current_user)):
+    product = product.model_dump(exclude_unset=True)
+    if product['original_price'] > 0:
+        product['percentage_discount'] = ((product['original_price']-product['new_price'])/product['original_price'])*100
+        product_obj = await models.Product.create(**product, buisness = user)
+        product_obj = await models.ProductPydantic.from_tortoise_orm(product_obj)
+        return {'status' : 'ok', 'data' : product_obj}
+    else:
+        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = 'original price should be more than zero')
+    
+
 @app.post('/upload/product/{id}')
-async def upload_product(id: int, file:UploadFile = File(...), user:models.UserPydantic = Depends(get_current_user)):
+async def upload_product_picture(id: int, file:UploadFile = File(...), user:models.UserPydantic = Depends(get_current_user)):
     file_path = 'static/images/'
     
     product = await models.Product.get(id=id)
