@@ -147,7 +147,7 @@ async def update_buisness_details(data:models.BuisnessPydanticIn, user:models.Us
     data = data.model_dump(exclude_unset=True)
     buisness = buisness.update_from_dict(data=data)
     await buisness.save()
-    return await models.BuisnessPydantic.from_tortoise_orm(buisness)
+    return {'status':'ok',}
 
 
 @app.get('/products')
