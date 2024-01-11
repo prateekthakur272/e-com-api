@@ -29,7 +29,7 @@ class Buisness(Model):
     
 
 BuisnessPydantic = creator.pydantic_model_creator(Buisness, name='Buisness')
-BuisnessPydanticIn = creator.pydantic_model_creator(Buisness, name='BuisnessIn', exclude_readonly=True)
+BuisnessPydanticIn = creator.pydantic_model_creator(Buisness, name='BuisnessIn', exclude_readonly=True, exclude=('logo', 'id'))
 
 
 
@@ -41,9 +41,10 @@ class Product(Model):
     new_price = fields.IntField()
     percentage_discount = fields.IntField()
     offer_expiration_date = fields.DateField(default=datetime.utcnow)
+    date_published = fields.DatetimeField(default=datetime.utcnow,)
     product_image = fields.CharField(max_length=200, null = False, default = 'default_product_img.png')
     buisness = fields.ForeignKeyField('models.Buisness', related_name='products')
     
 
 ProductPydantic = creator.pydantic_model_creator(Product, name='Product')
-ProductPydanticIn = creator.pydantic_model_creator(Product, name='ProductIn',exclude=('percentage_discount','id',))
+ProductPydanticIn = creator.pydantic_model_creator(Product, name='ProductIn',exclude=('percentage_discount','id','product_image','date_published'))

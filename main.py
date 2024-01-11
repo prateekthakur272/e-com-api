@@ -4,6 +4,7 @@ import uvicorn
 import models
 from fastapi.responses import HTMLResponse
 from fastapi.requests import Request
+from datetime import datetime
 # imports for signals
 from tortoise.signals import post_save
 from typing import List, Optional, Type
@@ -181,6 +182,29 @@ async def add_product(product: models.ProductPydanticIn, user: models.UserPydant
         return {'status' : 'ok', 'data' : product_obj}
     else:
         raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = 'original price should be more than zero')
+    
+
+@app.put('/products/{id}')
+async def update_product(id:int, data:models.ProductPydanticIn, user:models.UserPydantic = Depends(get_current_user)):
+    product = await models.Product.get(id=id)
+    buisness = await product.buisness
+    owner = await buisness.owner
+    
+    data = data.model_dump(exclude_unset=True)
+    data['date_published'] = datetime.utcnow()
+    print(data)
+    
+    if user == owner:
+        if data['original_price'] > 0:
+            data['percentage_discount'] = ((data['original_price']-data['new_price'])/data['original_price'])*100
+            product = product.update_from_dict(data=data)
+            await product.save()
+            response = await models.ProductPydantic.from_tortoise_orm(product)
+            return {'status':'ok', 'data':response}
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='original price should be more than zero')
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Not Authorised', headers={
+            'WWW-Authenticate':'Bearer'
+        })        
     
     
 @app.delete('/products/{id}')
