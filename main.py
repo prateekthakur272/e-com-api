@@ -182,6 +182,20 @@ async def add_product(product: models.ProductPydanticIn, user: models.UserPydant
     else:
         raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = 'original price should be more than zero')
     
+    
+@app.delete('/products/{id}')
+async def delete_product(id:int, user:models.UserPydantic = Depends(get_current_user)):
+    product = await models.Product.get(id=id)
+    buisness = await product.buisness
+    owner = await buisness.owner
+    if user == owner:
+        await product.delete()
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail= 'Not authorised',headers={
+            'WWW-Authenticate':'Bearer'
+        })
+    return {'status':'ok'}
+    
 
 @app.post('/upload/product/{id}')
 async def upload_product_picture(id: int, file:UploadFile = File(...), user:models.UserPydantic = Depends(get_current_user)):
