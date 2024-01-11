@@ -65,16 +65,19 @@ def root():
 @app.post('/user/me')
 async def login(user: models.UserPydanticIn = Depends(get_current_user)):
     buisness = await models.Buisness.get(owner=user)
+    buisness = await models.BuisnessPydantic.from_tortoise_orm(buisness)
     logo = buisness.logo
     logo_url = f'{BASE_URL}static/images/{logo}'
+    buisness = buisness.model_dump(exclude=['logo',])
+    user = await models.UserPydanticOut.from_tortoise_orm(user)
     return {
         'status': 'ok',
         'data': {
-            'username':user.username,
-            'email':user.email,
-            'verified':user.is_verified,
-            'join_date': user.join_date.strftime('%b %d %Y'),
-            'logo_url': logo_url
+            'user': user,
+            'buisness': {
+                **buisness,
+                'logo_url':logo_url,
+            },
         }
     }
 
@@ -137,6 +140,14 @@ async def upload_profile(file: UploadFile = File(...), user: models.UserPydantic
     
     img_url = BASE_URL+file_name
     return {'status':'ok','img_url':img_url}
+
+@app.put('/buisness/me')
+async def update_buisness_details(data:models.BuisnessPydanticIn, user:models.UserPydantic = Depends(get_current_user)):
+    buisness = await models.Buisness.get(owner=user)
+    data = data.model_dump(exclude_unset=True)
+    buisness = buisness.update_from_dict(data=data)
+    await buisness.save()
+    return await models.BuisnessPydantic.from_tortoise_orm(buisness)
 
 
 @app.get('/products')
